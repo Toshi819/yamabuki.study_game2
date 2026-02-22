@@ -24,7 +24,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.2";
 
 console.log("script loaded");
 const app = document.getElementById("app");
