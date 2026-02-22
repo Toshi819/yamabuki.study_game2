@@ -24,7 +24,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.0.4";
 
 console.log("script loaded");
 const app = document.getElementById("app");
@@ -830,7 +830,7 @@ async function goHome() {
 let unsubscribeRanking = null;
 
 let previousRanks = {};
-let unsubscribeRanking = null;
+
 
 function showRanking() {
   app.innerHTML = `
