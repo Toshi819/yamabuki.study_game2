@@ -789,17 +789,12 @@ async function finishQuiz() {
   }
 
   // 🔥 合計ベスト更新
-  let total = 0;
-  for (let k in userData.scores) {
-    total += userData.scores[k];
-  }
+   const totalScore = Object.values(scores)
+    .reduce((sum, val) => sum + Number(val), 0);
 
-  userData.totalScore = total;
-
-  // 🔥 Firestoreに更新
   await updateDoc(userRef, {
-    scores: userData.scores,
-    totalScore: userData.totalScore
+    scores: scores,
+    totalScore: totalScore
   });
 
   app.innerHTML = `
