@@ -504,16 +504,26 @@ function startGame() {
 
 
 // ===== 教科選択処理 =====
-function selectSubject(subject) {
+async function selectSubject(subject) {
   localStorage.setItem("selectedSubject", subject);
-  showRoundSelect(subject);
+  await showRoundSelect(subject);
 }
-function showRoundSelect(subject) {
+
+async function showRoundSelect(subject) {
   const currentId = localStorage.getItem("currentUser");
-  const users = getUsers();
-  const user = users[currentId];
+
+  const userRef = doc(db, "users", currentId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    alert("ユーザーデータが見つかりません");
+    return;
+  }
+
+  const user = userSnap.data();
 
   let html = `<h2>${subject} - 回を選択</h2>`;
+
 
   rounds.forEach((round, index) => {
     const key = subject + "_" + round;
