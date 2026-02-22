@@ -29,7 +29,7 @@ const APP_VERSION = "1.0.3";
 console.log("script loaded");
 const app = document.getElementById("app");
 
-let previousRanks = {};
+
 
 // ===== 教科データ =====
 const subjects = ["国語", "数学", "言語文化","情報産業と社会","英コミュ1(標準)"];
@@ -829,6 +829,9 @@ async function goHome() {
 
 let unsubscribeRanking = null;
 
+let previousRanks = {};
+let unsubscribeRanking = null;
+
 function showRanking() {
   app.innerHTML = `
     <h2>ランキング</h2>
@@ -837,74 +840,100 @@ function showRanking() {
   `;
 
   const rankingDiv = document.getElementById("rankingList");
+  const currentId = localStorage.getItem("currentUser");
 
-  // すでに監視してたら解除
-  if (unsubscribeRanking) {
-    unsubscribeRanking();
-  }
+  if (unsubscribeRanking) unsubscribeRanking();
 
   unsubscribeRanking = onSnapshot(collection(db, "users"), (snapshot) => {
+
     let ranking = [];
 
-    snapshot.forEach(doc => {
-      ranking.push(doc.data());
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      ranking.push({
+        id: data.id,
+        name: data.name,
+        totalScore: Number(data.totalScore || 0)
+      });
     });
 
+    // 🔥 数値ソート保証
     ranking.sort((a, b) => b.totalScore - a.totalScore);
 
-    const currentId = localStorage.getItem("currentUser");
+    let newRanks = {};
+    ranking.forEach((user, index) => {
+      newRanks[user.id] = index + 1;
+    });
+
+    const myRank = newRanks[currentId];
+
+    // 🔥 表示対象を決定
+    let displayUsers = [];
+
+    // ① 上位10位
+    displayUsers = ranking.slice(0, 10);
+
+    // ② 自分が10位以下なら周囲も追加
+    if (myRank > 10) {
+      const start = Math.max(myRank - 3, 0);
+      const end = Math.min(myRank + 2, ranking.length);
+      const around = ranking.slice(start, end);
+
+      displayUsers = [...displayUsers, ...around];
+    }
+
+    // 重複削除
+    const seen = new Set();
+    displayUsers = displayUsers.filter(u => {
+      if (seen.has(u.id)) return false;
+      seen.add(u.id);
+      return true;
+    });
 
     let html = "";
-    let newRanks = {};
 
-    ranking.forEach((user, index) => {
-      const currentRank = index + 1;
-      newRanks[user.id] = currentRank;
+    displayUsers.forEach(user => {
+      const rank = newRanks[user.id];
 
       let medal = "";
-      if (index === 0) medal = "🥇";
-      else if (index === 1) medal = "🥈";
-      else if (index === 2) medal = "🥉";
-
-      let extraClass = "";
-      if (index === 0) extraClass += " ranking-first";
-      if (user.id === currentId) extraClass += " ranking-me";
+      if (rank === 1) medal = "🥇";
+      else if (rank === 2) medal = "🥈";
+      else if (rank === 3) medal = "🥉";
 
       let indicator = "";
-
       if (previousRanks[user.id]) {
-        if (currentRank < previousRanks[user.id]) {
+        if (rank < previousRanks[user.id]) {
           indicator = `<span class="rank-up">▲UP</span>`;
-        } else if (currentRank > previousRanks[user.id]) {
+        } else if (rank > previousRanks[user.id]) {
           indicator = `<span class="rank-down">▼DOWN</span>`;
         }
       }
 
+      let extraClass = "";
+      if (rank === 1) extraClass += " ranking-first";
+      if (user.id === currentId) extraClass += " ranking-me";
 
       html += `
-        <div class="ranking-item ${extraClass}" 
-            style="animation-delay:${index * 0.1}s">
-          ${medal} ${currentRank}位 
-          ${user.name} 
+        <div class="ranking-item ${extraClass}">
+          ${medal} ${rank}位
+          ${user.name}
           <strong>${user.totalScore}</strong>
           ${indicator}
         </div>
       `;
-
     });
 
     rankingDiv.innerHTML = html;
-
     previousRanks = newRanks;
   });
 
-
-
-  document.getElementById("backBtn").addEventListener("click", () => {
-    if (unsubscribeRanking) unsubscribeRanking();
-    goHome();
-  });
+  document.getElementById("backBtn")
+    .addEventListener("click", () => {
+      if (unsubscribeRanking) unsubscribeRanking();
+      goHome();
+    });
 }
+
 
 
 function logout() {
