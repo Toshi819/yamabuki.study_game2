@@ -24,7 +24,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-const APP_VERSION = "1.0.2";
+const APP_VERSION = "1.0.3";
 
 console.log("script loaded");
 const app = document.getElementById("app");
@@ -767,7 +767,6 @@ async function finishQuiz() {
     }
   }
 
-  // 🔥 Firestoreから現在データ取得
   const userRef = doc(db, "users", currentId);
   const userSnap = await getDoc(userRef);
 
@@ -778,14 +777,12 @@ async function finishQuiz() {
 
   const userData = userSnap.data();
 
-  if (!userData.scores) {
-    userData.scores = {};
-  }
+  const scores = userData.scores || {};
+  const previousBest = scores[key] || 0;
 
-  const best = userData.scores[key] || 0;
-
-  if (score > best) {
-    userData.scores[key] = score;
+  // 🔥 ベスト更新判定
+  if (score > previousBest) {
+    scores[key] = score;
   }
 
   // 🔥 合計ベスト更新
