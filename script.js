@@ -827,7 +827,7 @@ async function goHome() {
 
 
 
-let unsubscribeRanking = null;
+
 
 let previousRanks = {};
 
